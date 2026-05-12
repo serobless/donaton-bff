@@ -13,8 +13,10 @@ public class CausaDTO {
     private Long id;
     private String nombre;
     private String descripcion;
-    private BigDecimal metaMonto;
-    private BigDecimal montoActual;
-    private String estado;
+    private BigDecimal meta;
+    private BigDecimal recaudado;
+    private Boolean activa;
+    private String categoria;
     private String imagenUrl;
+    private Integer diasRestantes;
 }
