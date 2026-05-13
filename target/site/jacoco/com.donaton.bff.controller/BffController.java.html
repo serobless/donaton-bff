@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BffController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">donaton-bff</a> &gt; <a href="index.source.html" class="el_package">com.donaton.bff.controller</a> &gt; <span class="el_source">BffController.java</span></div><h1>BffController.java</h1><pre class="source lang-java linenums">package com.donaton.bff.controller;
+
+import com.donaton.bff.client.DonacionesClient;
+import com.donaton.bff.dto.*;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+<span class="fc" id="L16">@Slf4j</span>
+@RestController
+@RequestMapping(&quot;/bff&quot;)
+@RequiredArgsConstructor
+public class BffController {
+
+    private final DonacionesClient donacionesClient;
+
+    /**
+     * GET /bff/portada
+     * Agrega: causas activas + top donadores + resumen general.
+     * Endpoint público, no requiere autenticación.
+     */
+    @GetMapping(&quot;/portada&quot;)
+    public Mono&lt;ResponseEntity&lt;PortadaResponseDTO&gt;&gt; getPortada() {
+<span class="fc" id="L31">        log.info(&quot;GET /bff/portada&quot;);</span>
+
+<span class="fc" id="L33">        Mono&lt;List&lt;CausaDTO&gt;&gt; causasMono = donacionesClient.getCausasActivas();</span>
+<span class="fc" id="L34">        Mono&lt;List&lt;TopDonadorDTO&gt;&gt; topMono = donacionesClient.getTopDonadores(5);</span>
+<span class="fc" id="L35">        Mono&lt;BigDecimal&gt; totalMono = donacionesClient.getTotalRecaudado();</span>
+<span class="fc" id="L36">        Mono&lt;Long&gt; conteoMono = donacionesClient.getConteoDonaciones();</span>
+
+<span class="fc" id="L38">        return Mono.zip(causasMono, topMono, totalMono, conteoMono)</span>
+<span class="fc" id="L39">                .map(tuple -&gt; {</span>
+<span class="fc" id="L40">                    List&lt;CausaDTO&gt; causas = tuple.getT1();</span>
+<span class="fc" id="L41">                    List&lt;TopDonadorDTO&gt; top = tuple.getT2();</span>
+<span class="fc" id="L42">                    BigDecimal total = tuple.getT3();</span>
+<span class="fc" id="L43">                    Long conteo = tuple.getT4();</span>
+
+<span class="fc" id="L45">                    PortadaResponseDTO response = PortadaResponseDTO.builder()</span>
+<span class="fc" id="L46">                            .causasActivas(causas)</span>
+<span class="fc" id="L47">                            .topDonadores(top)</span>
+<span class="fc" id="L48">                            .resumen(PortadaResponseDTO.ResumenDTO.builder()</span>
+<span class="fc" id="L49">                                    .totalRecaudado(total)</span>
+<span class="fc" id="L50">                                    .totalDonaciones(conteo)</span>
+<span class="fc" id="L51">                                    .causasActivas((long) causas.size())</span>
+<span class="fc" id="L52">                                    .build())</span>
+<span class="fc" id="L53">                            .build();</span>
+
+                    // Si todos los datos están vacíos, el CB abrió: informar al cliente
+<span class="pc bpc" id="L56" title="2 of 6 branches missed.">                    if (causas.isEmpty() &amp;&amp; top.isEmpty() &amp;&amp; total.compareTo(BigDecimal.ZERO) == 0) {</span>
+<span class="fc" id="L57">                        response.setMensajeError(</span>
+<span class="fc" id="L58">                                &quot;El servicio de donaciones no está disponible en este momento. Intente más tarde.&quot;);</span>
+                    }
+
+<span class="fc" id="L61">                    return ResponseEntity.ok(response);</span>
+                });
+    }
+
+    /**
+     * GET /bff/dashboard
+     * Agrega: stats totales + top donadores + últimas donaciones para el admin.
+     */
+    @GetMapping(&quot;/dashboard&quot;)
+    public Mono&lt;ResponseEntity&lt;DashboardResponseDTO&gt;&gt; getDashboard() {
+<span class="nc" id="L71">        log.info(&quot;GET /bff/dashboard&quot;);</span>
+
+<span class="nc" id="L73">        Mono&lt;BigDecimal&gt; totalMono = donacionesClient.getTotalRecaudado();</span>
+<span class="nc" id="L74">        Mono&lt;Long&gt; conteoMono = donacionesClient.getConteoDonaciones();</span>
+<span class="nc" id="L75">        Mono&lt;List&lt;TopDonadorDTO&gt;&gt; topMono = donacionesClient.getTopDonadores(10);</span>
+<span class="nc" id="L76">        Mono&lt;List&lt;DonacionDTO&gt;&gt; ultimasMono = donacionesClient.getUltimasDonaciones(10);</span>
+<span class="nc" id="L77">        Mono&lt;List&lt;CausaDTO&gt;&gt; causasMono = donacionesClient.getCausasActivas();</span>
+
+<span class="nc" id="L79">        return Mono.zip(totalMono, conteoMono, topMono, ultimasMono, causasMono)</span>
+<span class="nc" id="L80">                .map(tuple -&gt; {</span>
+<span class="nc" id="L81">                    BigDecimal total = tuple.getT1();</span>
+<span class="nc" id="L82">                    Long conteo = tuple.getT2();</span>
+<span class="nc" id="L83">                    List&lt;TopDonadorDTO&gt; top = tuple.getT3();</span>
+<span class="nc" id="L84">                    List&lt;DonacionDTO&gt; ultimas = tuple.getT4();</span>
+<span class="nc" id="L85">                    List&lt;CausaDTO&gt; causas = tuple.getT5();</span>
+
+<span class="nc bnc" id="L87" title="All 4 branches missed.">                    boolean sinDatos = top.isEmpty() &amp;&amp; ultimas.isEmpty()</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">                            &amp;&amp; total.compareTo(BigDecimal.ZERO) == 0;</span>
+
+<span class="nc" id="L90">                    DashboardResponseDTO response = DashboardResponseDTO.builder()</span>
+<span class="nc" id="L91">                            .totalDonado(total)</span>
+<span class="nc" id="L92">                            .totalDonaciones(conteo)</span>
+<span class="nc" id="L93">                            .causasActivas((long) causas.size())</span>
+<span class="nc" id="L94">                            .causasInactivas(0L)</span>
+<span class="nc" id="L95">                            .topDonadores(top)</span>
+<span class="nc" id="L96">                            .ultimasDonaciones(ultimas)</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">                            .mensajeError(sinDatos</span>
+<span class="nc" id="L98">                                    ? &quot;El servicio de donaciones no está disponible en este momento.&quot;</span>
+<span class="nc" id="L99">                                    : null)</span>
+<span class="nc" id="L100">                            .build();</span>
+
+<span class="nc" id="L102">                    return ResponseEntity.ok(response);</span>
+                });
+    }
+
+    /**
+     * GET /bff/transparencia
+     * Devuelve la tabla pública de todas las donaciones auditadas.
+     */
+    @GetMapping(&quot;/transparencia&quot;)
+    public Mono&lt;ResponseEntity&lt;TransparenciaResponseDTO&gt;&gt; getTransparencia() {
+<span class="nc" id="L112">        log.info(&quot;GET /bff/transparencia&quot;);</span>
+
+<span class="nc" id="L114">        return donacionesClient.getDonaciones()</span>
+<span class="nc" id="L115">                .map(donaciones -&gt; {</span>
+<span class="nc" id="L116">                    TransparenciaResponseDTO response = TransparenciaResponseDTO.builder()</span>
+<span class="nc" id="L117">                            .donaciones(donaciones)</span>
+<span class="nc" id="L118">                            .totalRegistros(donaciones.size())</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">                            .mensajeError(donaciones.isEmpty()</span>
+<span class="nc" id="L120">                                    ? &quot;No se pudieron cargar los datos de transparencia en este momento.&quot;</span>
+<span class="nc" id="L121">                                    : null)</span>
+<span class="nc" id="L122">                            .build();</span>
+
+<span class="nc" id="L124">                    return ResponseEntity.ok(response);</span>
+                });
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
