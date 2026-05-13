@@ -35,9 +35,9 @@ class BffControllerTest {
         CausaDTO causa = new CausaDTO();
         causa.setId(1L);
         causa.setNombre("Campaña Solidaria");
-        causa.setEstado("ACTIVA");
-        causa.setMetaMonto(BigDecimal.valueOf(100_000));
-        causa.setMontoActual(BigDecimal.valueOf(45_000));
+        causa.setActiva(true);
+        causa.setMeta(BigDecimal.valueOf(100_000));
+        causa.setRecaudado(BigDecimal.valueOf(45_000));
 
         TopDonadorDTO donador = new TopDonadorDTO("María López", BigDecimal.valueOf(20_000), 5L);
 
