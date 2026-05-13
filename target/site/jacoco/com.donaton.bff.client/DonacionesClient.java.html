@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DonacionesClient.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">donaton-bff</a> &gt; <a href="index.source.html" class="el_package">com.donaton.bff.client</a> &gt; <span class="el_source">DonacionesClient.java</span></div><h1>DonacionesClient.java</h1><pre class="source lang-java linenums">package com.donaton.bff.client;
+
+import com.donaton.bff.dto.CausaDTO;
+import com.donaton.bff.dto.DonacionDTO;
+import com.donaton.bff.dto.TopDonadorDTO;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+<span class="fc" id="L17">@Slf4j</span>
+@Component
+public class DonacionesClient {
+
+<span class="fc" id="L21">    private static final String CB_NAME = &quot;donaciones-cb&quot;;</span>
+
+    private final WebClient webClient;
+
+<span class="fc" id="L25">    public DonacionesClient(@Qualifier(&quot;donacionesWebClient&quot;) WebClient webClient) {</span>
+<span class="fc" id="L26">        this.webClient = webClient;</span>
+<span class="fc" id="L27">    }</span>
+
+    // --- Causas ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = &quot;causasActivasFallback&quot;)
+    public Mono&lt;List&lt;CausaDTO&gt;&gt; getCausasActivas() {
+<span class="nc" id="L33">        log.debug(&quot;Llamando a ms-donaciones: GET /causas?estado=ACTIVA&quot;);</span>
+<span class="nc" id="L34">        return webClient.get()</span>
+<span class="nc" id="L35">                .uri(&quot;/causas?estado=ACTIVA&quot;)</span>
+<span class="nc" id="L36">                .retrieve()</span>
+<span class="nc" id="L37">                .bodyToMono(new ParameterizedTypeReference&lt;List&lt;CausaDTO&gt;&gt;() {})</span>
+<span class="nc" id="L38">                .doOnError(e -&gt; log.warn(&quot;Error al obtener causas activas: {}&quot;, e.getMessage()));</span>
+    }
+
+    public Mono&lt;List&lt;CausaDTO&gt;&gt; causasActivasFallback(Throwable t) {
+<span class="fc" id="L42">        log.warn(&quot;Circuit Breaker activo para causasActivas: {}&quot;, t.getMessage());</span>
+<span class="fc" id="L43">        return Mono.just(List.of());</span>
+    }
+
+    // --- Top Donadores ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = &quot;topDonadoresFallback&quot;)
+    public Mono&lt;List&lt;TopDonadorDTO&gt;&gt; getTopDonadores(int limit) {
+<span class="nc" id="L50">        log.debug(&quot;Llamando a ms-donaciones: GET /donaciones/top?limit={}&quot;, limit);</span>
+<span class="nc" id="L51">        return webClient.get()</span>
+<span class="nc" id="L52">                .uri(&quot;/donaciones/top?limit={limit}&quot;, limit)</span>
+<span class="nc" id="L53">                .retrieve()</span>
+<span class="nc" id="L54">                .bodyToMono(new ParameterizedTypeReference&lt;List&lt;TopDonadorDTO&gt;&gt;() {})</span>
+<span class="nc" id="L55">                .doOnError(e -&gt; log.warn(&quot;Error al obtener top donadores: {}&quot;, e.getMessage()));</span>
+    }
+
+    public Mono&lt;List&lt;TopDonadorDTO&gt;&gt; topDonadoresFallback(int limit, Throwable t) {
+<span class="fc" id="L59">        log.warn(&quot;Circuit Breaker activo para topDonadores: {}&quot;, t.getMessage());</span>
+<span class="fc" id="L60">        return Mono.just(List.of());</span>
+    }
+
+    // --- Total recaudado ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = &quot;totalRecaudadoFallback&quot;)
+    public Mono&lt;BigDecimal&gt; getTotalRecaudado() {
+<span class="nc" id="L67">        log.debug(&quot;Llamando a ms-donaciones: GET /donaciones/total&quot;);</span>
+<span class="nc" id="L68">        return webClient.get()</span>
+<span class="nc" id="L69">                .uri(&quot;/donaciones/total&quot;)</span>
+<span class="nc" id="L70">                .retrieve()</span>
+<span class="nc" id="L71">                .bodyToMono(BigDecimal.class)</span>
+<span class="nc" id="L72">                .doOnError(e -&gt; log.warn(&quot;Error al obtener total recaudado: {}&quot;, e.getMessage()));</span>
+    }
+
+    public Mono&lt;BigDecimal&gt; totalRecaudadoFallback(Throwable t) {
+<span class="fc" id="L76">        log.warn(&quot;Circuit Breaker activo para totalRecaudado: {}&quot;, t.getMessage());</span>
+<span class="fc" id="L77">        return Mono.just(BigDecimal.ZERO);</span>
+    }
+
+    // --- Conteo de donaciones ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = &quot;conteoFallback&quot;)
+    public Mono&lt;Long&gt; getConteoDonaciones() {
+<span class="nc" id="L84">        log.debug(&quot;Llamando a ms-donaciones: GET /donaciones/count&quot;);</span>
+<span class="nc" id="L85">        return webClient.get()</span>
+<span class="nc" id="L86">                .uri(&quot;/donaciones/count&quot;)</span>
+<span class="nc" id="L87">                .retrieve()</span>
+<span class="nc" id="L88">                .bodyToMono(Long.class)</span>
+<span class="nc" id="L89">                .doOnError(e -&gt; log.warn(&quot;Error al obtener conteo de donaciones: {}&quot;, e.getMessage()));</span>
+    }
+
+    public Mono&lt;Long&gt; conteoFallback(Throwable t) {
+<span class="fc" id="L93">        log.warn(&quot;Circuit Breaker activo para conteoDonaciones: {}&quot;, t.getMessage());</span>
+<span class="fc" id="L94">        return Mono.just(0L);</span>
+    }
+
+    // --- Todas las donaciones (transparencia) ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = &quot;donacionesFallback&quot;)
+    public Mono&lt;List&lt;DonacionDTO&gt;&gt; getDonaciones() {
+<span class="nc" id="L101">        log.debug(&quot;Llamando a ms-donaciones: GET /donaciones&quot;);</span>
+<span class="nc" id="L102">        return webClient.get()</span>
+<span class="nc" id="L103">                .uri(&quot;/donaciones&quot;)</span>
+<span class="nc" id="L104">                .retrieve()</span>
+<span class="nc" id="L105">                .bodyToMono(new ParameterizedTypeReference&lt;List&lt;DonacionDTO&gt;&gt;() {})</span>
+<span class="nc" id="L106">                .doOnError(e -&gt; log.warn(&quot;Error al obtener donaciones: {}&quot;, e.getMessage()));</span>
+    }
+
+    public Mono&lt;List&lt;DonacionDTO&gt;&gt; donacionesFallback(Throwable t) {
+<span class="fc" id="L110">        log.warn(&quot;Circuit Breaker activo para donaciones: {}&quot;, t.getMessage());</span>
+<span class="fc" id="L111">        return Mono.just(List.of());</span>
+    }
+
+    // --- Últimas donaciones (dashboard) ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = &quot;ultimasDonacionesFallback&quot;)
+    public Mono&lt;List&lt;DonacionDTO&gt;&gt; getUltimasDonaciones(int limit) {
+<span class="nc" id="L118">        log.debug(&quot;Llamando a ms-donaciones: GET /donaciones/ultimas?limit={}&quot;, limit);</span>
+<span class="nc" id="L119">        return webClient.get()</span>
+<span class="nc" id="L120">                .uri(&quot;/donaciones/ultimas?limit={limit}&quot;, limit)</span>
+<span class="nc" id="L121">                .retrieve()</span>
+<span class="nc" id="L122">                .bodyToMono(new ParameterizedTypeReference&lt;List&lt;DonacionDTO&gt;&gt;() {})</span>
+<span class="nc" id="L123">                .doOnError(e -&gt; log.warn(&quot;Error al obtener últimas donaciones: {}&quot;, e.getMessage()));</span>
+    }
+
+    public Mono&lt;List&lt;DonacionDTO&gt;&gt; ultimasDonacionesFallback(int limit, Throwable t) {
+<span class="nc" id="L127">        log.warn(&quot;Circuit Breaker activo para ultimasDonaciones: {}&quot;, t.getMessage());</span>
+<span class="nc" id="L128">        return Mono.just(List.of());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
