@@ -102,9 +102,9 @@ public class DonacionesClient {
 
     @CircuitBreaker(name = CB_NAME, fallbackMethod = "donacionesFallback")
     public Mono<List<DonacionDTO>> getDonaciones() {
-        log.debug("Llamando a ms-donaciones: GET /api/donaciones");
+        log.debug("Llamando a ms-donaciones: GET /api/donaciones/transparencia");
         return webClient.get()
-                .uri("/api/donaciones")
+                .uri("/api/donaciones/transparencia")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<DonacionDTO>>() {})
                 .doOnError(e -> log.error("Error al obtener donaciones [{}: {}]",
