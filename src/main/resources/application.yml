@@ -8,7 +8,7 @@ spring:
 # URLs de microservicios upstream
 app:
   ms-donaciones:
-    base-url: http://localhost:8081
+    base-url: http://localhost:8084
   ms-auth:
     base-url: http://localhost:8083
 

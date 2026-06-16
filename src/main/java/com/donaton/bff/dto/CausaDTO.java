@@ -19,4 +19,6 @@ public class CausaDTO {
     private String categoria;
     private String imagenUrl;
     private Integer diasRestantes;
+    private Boolean destacada;
+    private String urgencia;
 }
