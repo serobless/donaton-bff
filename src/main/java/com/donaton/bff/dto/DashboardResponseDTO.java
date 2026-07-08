@@ -15,5 +15,6 @@ public class DashboardResponseDTO {
     private Long causasInactivas;
     private List<TopDonadorDTO> topDonadores;
     private List<DonacionDTO> ultimasDonaciones;
+    private Long testimoniosPendientes;
     private String mensajeError;
 }

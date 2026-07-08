@@ -75,14 +75,16 @@ public class BffController {
         Mono<List<TopDonadorDTO>> topMono = donacionesClient.getTopDonadores(10);
         Mono<List<DonacionDTO>> ultimasMono = donacionesClient.getUltimasDonaciones(10);
         Mono<List<CausaDTO>> causasMono = donacionesClient.getCausasActivas();
+        Mono<Long> testimoniosMono = donacionesClient.getTestimoniosPendientes();
 
-        return Mono.zip(totalMono, conteoMono, topMono, ultimasMono, causasMono)
+        return Mono.zip(totalMono, conteoMono, topMono, ultimasMono, causasMono, testimoniosMono)
                 .map(tuple -> {
                     BigDecimal total = tuple.getT1();
                     Long conteo = tuple.getT2();
                     List<TopDonadorDTO> top = tuple.getT3();
                     List<DonacionDTO> ultimas = tuple.getT4();
                     List<CausaDTO> causas = tuple.getT5();
+                    Long testimonios = tuple.getT6();
 
                     boolean sinDatos = top.isEmpty() && ultimas.isEmpty()
                             && total.compareTo(BigDecimal.ZERO) == 0;
@@ -94,6 +96,7 @@ public class BffController {
                             .causasInactivas(0L)
                             .topDonadores(top)
                             .ultimasDonaciones(ultimas)
+                            .testimoniosPendientes(testimonios)
                             .mensajeError(sinDatos
                                     ? "El servicio de donaciones no está disponible en este momento."
                                     : null)

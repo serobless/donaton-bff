@@ -116,6 +116,25 @@ public class DonacionesClient {
         return Mono.just(List.of());
     }
 
+    // --- Testimonios pendientes (dashboard) ---
+
+    @CircuitBreaker(name = CB_NAME, fallbackMethod = "testimoniosPendientesFallback")
+    public Mono<Long> getTestimoniosPendientes() {
+        log.debug("Llamando a ms-donaciones: GET /api/testimonios/pendientes");
+        return webClient.get()
+                .uri("/api/testimonios/pendientes")
+                .retrieve()
+                .bodyToFlux(Object.class)
+                .count()
+                .doOnError(e -> log.error("Error al obtener testimonios pendientes [{}: {}]",
+                        e.getClass().getSimpleName(), e.getMessage()));
+    }
+
+    public Mono<Long> testimoniosPendientesFallback(Throwable t) {
+        log.error("Fallback testimoniosPendientes activado [{}: {}]", t.getClass().getSimpleName(), t.getMessage());
+        return Mono.just(0L);
+    }
+
     // --- Últimas donaciones (dashboard) ---
 
     @CircuitBreaker(name = CB_NAME, fallbackMethod = "ultimasDonacionesFallback")
