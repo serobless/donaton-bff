@@ -17,4 +17,7 @@ public class DonacionDTO {
     private BigDecimal monto;
     private LocalDateTime fecha;
     private String estado;
+    private Boolean esEmpresa;
+    private String nombreEmpresa;
+    private Boolean requiereAprobacion;
 }

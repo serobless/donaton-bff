@@ -5,13 +5,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CausaDTO {
     private Long id;
-    private String nombre;
+    private String titulo;
     private String descripcion;
     private BigDecimal meta;
     private BigDecimal recaudado;
@@ -21,4 +22,5 @@ public class CausaDTO {
     private Integer diasRestantes;
     private Boolean destacada;
     private String urgencia;
+    private LocalDate fechaFin;
 }

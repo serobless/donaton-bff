@@ -123,6 +123,7 @@ public class DonacionesClient {
         log.debug("Llamando a ms-donaciones: GET /api/testimonios/pendientes");
         return webClient.get()
                 .uri("/api/testimonios/pendientes")
+                .header("X-User-Roles", "ADMIN")
                 .retrieve()
                 .bodyToFlux(Object.class)
                 .count()
@@ -139,11 +140,12 @@ public class DonacionesClient {
 
     @CircuitBreaker(name = CB_NAME, fallbackMethod = "ultimasDonacionesFallback")
     public Mono<List<DonacionDTO>> getUltimasDonaciones(int limit) {
-        log.debug("Llamando a ms-donaciones: GET /api/donaciones/ultimas?limit={}", limit);
+        log.debug("Llamando a ms-donaciones: GET /api/donaciones/transparencia (últimas {})", limit);
         return webClient.get()
-                .uri("/api/donaciones/ultimas?limit={limit}", limit)
+                .uri("/api/donaciones/transparencia")
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<DonacionDTO>>() {})
+                .map(list -> list.size() > limit ? list.subList(list.size() - limit, list.size()) : list)
                 .doOnError(e -> log.error("Error al obtener últimas donaciones [{}: {}]",
                         e.getClass().getSimpleName(), e.getMessage()));
     }
