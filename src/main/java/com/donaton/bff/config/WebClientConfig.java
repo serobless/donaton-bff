@@ -16,10 +16,10 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 public class WebClientConfig {
 
-    @Value("${app.ms-donaciones.base-url}")
+    @Value("${MS_DONACIONES_URL:http://localhost:8084}")
     private String donacionesBaseUrl;
 
-    @Value("${app.ms-auth.base-url}")
+    @Value("${MS_AUTH_URL:http://localhost:8083}")
     private String authBaseUrl;
 
     @Bean("donacionesWebClient")
