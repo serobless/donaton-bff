@@ -34,7 +34,7 @@ class BffControllerTest {
         // given
         CausaDTO causa = new CausaDTO();
         causa.setId(1L);
-        causa.setNombre("Campaña Solidaria");
+        causa.setTitulo("Campaña Solidaria");
         causa.setActiva(true);
         causa.setMeta(BigDecimal.valueOf(100_000));
         causa.setRecaudado(BigDecimal.valueOf(45_000));
@@ -58,7 +58,7 @@ class BffControllerTest {
                 .expectBody(PortadaResponseDTO.class)
                 .value(response -> {
                     assertThat(response.getCausasActivas()).hasSize(1);
-                    assertThat(response.getCausasActivas().get(0).getNombre())
+                    assertThat(response.getCausasActivas().get(0).getTitulo())
                             .isEqualTo("Campaña Solidaria");
                     assertThat(response.getTopDonadores()).hasSize(1);
                     assertThat(response.getTopDonadores().get(0).getNombre())
