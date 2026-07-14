@@ -1,0 +1,56 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: donaton-bff
+
+# URLs de microservicios upstream
+app:
+  ms-donaciones:
+    base-url: http://localhost:8084
+  ms-auth:
+    base-url: http://localhost:8083
+
+# Resilience4j - Circuit Breaker
+resilience4j:
+  circuitbreaker:
+    instances:
+      donaciones-cb:
+        # Abre el CB cuando el 50% de las últimas 10 llamadas fallan
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        # Mínimo de llamadas antes de calcular el porcentaje
+        minimum-number-of-calls: 10
+        # Tiempo en estado OPEN antes de pasar a HALF-OPEN (segundos)
+        wait-duration-in-open-state: 10s
+        # Llamadas permitidas en estado HALF-OPEN para probar recuperación
+        permitted-number-of-calls-in-half-open-state: 3
+        # Solo errores de infraestructura abren el CB (NO errores HTTP 4xx/5xx)
+        record-exceptions:
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientRequestException
+          - io.netty.channel.ConnectTimeoutException
+  timelimiter:
+    instances:
+      donaciones-cb:
+        timeout-duration: 3s
+
+# Actuator: exponer endpoints útiles para monitoreo
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,circuitbreakers,metrics
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+logging:
+  level:
+    com.donaton.bff: DEBUG
+    io.github.resilience4j: DEBUG
+    reactor.netty.http.client: DEBUG
